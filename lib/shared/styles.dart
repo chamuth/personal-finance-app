@@ -6,5 +6,5 @@ class Button {
 
 class Backgrounds
 {
-  static const Color pageBackground = Color.fromARGB(255, 230, 230, 230);
+  static const Color pageBackground = Color.fromARGB(255, 240, 240, 240);
 }

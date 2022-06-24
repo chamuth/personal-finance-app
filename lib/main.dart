@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:personal_finance/budget/budget.dart';
 import 'package:personal_finance/budget/income.dart';
 import 'package:personal_finance/home/home.dart';
 import 'budget/expenses.dart';
@@ -42,7 +43,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   var currentTab = 0;
-  var tabs = [Routes.home, Routes.income, Routes.expenses];
+  var tabs = [Routes.home, Routes.income, Routes.expenses, Routes.budget];
   final _navigatorKey = GlobalKey<NavigatorState>();
 
   @override
@@ -69,7 +70,17 @@ class _MyHomePageState extends State<MyHomePage> {
                       fontSize: 15, color: Color.fromARGB(150, 255, 255, 255)))
             ],
           )),
-          drawer: Drawer(child: ListView()),
+          drawer: Drawer(
+              child: ListView(
+            children: [
+              for (var i = 2022; i > 2001; i--)
+                ListTile(
+                  title: Text("February $i"),
+                  trailing: const Icon(Icons.arrow_forward, color: Colors.green),
+                  onTap: () {},
+                ),
+            ],
+          )),
           body: Center(
               child: Navigator(
             key: _navigatorKey,
@@ -84,6 +95,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 _navigatorKey.currentState!.pushNamed(tabs[i]);
               })
             },
+            type: BottomNavigationBarType.fixed,
             items: const <BottomNavigationBarItem>[
               BottomNavigationBarItem(
                 icon: Icon(Icons.dashboard),
@@ -97,6 +109,10 @@ class _MyHomePageState extends State<MyHomePage> {
                 icon: Icon(Icons.arrow_upward),
                 label: 'Expenses',
               ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.auto_graph),
+                label: 'Budget',
+              ),
             ],
           ),
           floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
@@ -104,12 +120,14 @@ class _MyHomePageState extends State<MyHomePage> {
             backgroundColor: Colors.orange,
             foregroundColor: Colors.black,
             shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.all(Radius.circular(15))
-            ),
+                borderRadius: BorderRadius.all(Radius.circular(15))),
             onPressed: () => {},
             tooltip: 'Add Income or Expense',
             label: const Text("Add"),
-            icon: const Icon(Icons.add, size: 28,),
+            icon: const Icon(
+              Icons.add,
+              size: 28,
+            ),
           ),
         ));
   }
@@ -126,6 +144,9 @@ class _MyHomePageState extends State<MyHomePage> {
         break;
       case Routes.expenses:
         page = const ExpensesPage();
+        break;
+      case Routes.budget:
+        page = const BudgetPage();
         break;
     }
 

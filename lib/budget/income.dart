@@ -15,26 +15,34 @@ class IncomePageState extends State<IncomePage> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Backgrounds.pageBackground,
+        color: Backgrounds.pageBackground,
         child: Padding(
             padding: mainPadding,
             child: Column(
               children: [
                 Padding(
-                  child: Row(children: [
-                    const Expanded(child:
-                      Text("Income Categories", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),)
+                    child: Row(
+                      children: [
+                        const Expanded(
+                            child: Text(
+                          "Income Categories",
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold),
+                        )),
+                        TextButton(
+                            onPressed: () {},
+                            child: Row(
+                              children: const [
+                                Padding(
+                                    child: Icon(Icons.filter_alt, size: 18),
+                                    padding: EdgeInsets.only(right: 5)),
+                                Text("Filter")
+                              ],
+                            ))
+                      ],
                     ),
-                    TextButton(
-                      onPressed: () {  },
-                      child: Row(children: const [
-                        Padding(child: Icon(Icons.filter_alt, size: 18), padding: EdgeInsets.only(right: 5)),
-                        Text("Filter")
-                      ],)
-                    )
-                  ],),
-                  padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 8)
-                ),
+                    padding:
+                        const EdgeInsets.symmetric(vertical: 0, horizontal: 8)),
                 Expanded(
                     child: ListView(
                   children: const [

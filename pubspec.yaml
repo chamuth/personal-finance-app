@@ -38,6 +38,9 @@ dependencies:
   expandable: ^5.0.1
   stack: ^0.0.1
   percent_indicator: ^4.2.1
+  flutter_redux: ^0.10.0
+  sqflite: ^2.0.2
+  path: ^1.8.0
 
 dev_dependencies:
   flutter_test:
