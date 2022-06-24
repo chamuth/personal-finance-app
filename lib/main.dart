@@ -1,11 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:personal_finance/budget/budget.dart';
-import 'package:personal_finance/budget/income.dart';
+import 'package:personal_finance/budget/incomeExpense.dart';
 import 'package:personal_finance/home/home.dart';
-import 'budget/expenses.dart';
+import 'package:toggle_switch/toggle_switch.dart';
 import 'consts/routes.dart';
+import 'database/database.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Create database
+  DB.initialize();
+
   runApp(const MyApp());
 }
 
@@ -16,7 +23,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Personal Finance App',
       theme: ThemeData(
         primarySwatch: Colors.green,
         // pageTransitionsTheme: const PageTransitionsTheme(
@@ -76,7 +83,8 @@ class _MyHomePageState extends State<MyHomePage> {
               for (var i = 2022; i > 2001; i--)
                 ListTile(
                   title: Text("February $i"),
-                  trailing: const Icon(Icons.arrow_forward, color: Colors.green),
+                  trailing:
+                      const Icon(Icons.arrow_forward, color: Colors.green),
                   onTap: () {},
                 ),
             ],
@@ -91,8 +99,10 @@ class _MyHomePageState extends State<MyHomePage> {
             currentIndex: currentTab,
             onTap: (i) => {
               setState(() {
-                currentTab = i;
-                _navigatorKey.currentState!.pushNamed(tabs[i]);
+                if (currentTab != i) {
+                  currentTab = i;
+                  _navigatorKey.currentState!.pushNamed(tabs[i]);
+                }
               })
             },
             type: BottomNavigationBarType.fixed,
@@ -121,7 +131,7 @@ class _MyHomePageState extends State<MyHomePage> {
             foregroundColor: Colors.black,
             shape: const RoundedRectangleBorder(
                 borderRadius: BorderRadius.all(Radius.circular(15))),
-            onPressed: () => {},
+            onPressed: () => addStatement(context),
             tooltip: 'Add Income or Expense',
             label: const Text("Add"),
             icon: const Icon(
@@ -132,6 +142,68 @@ class _MyHomePageState extends State<MyHomePage> {
         ));
   }
 
+  void addStatement(BuildContext context) {
+    final titleController = TextEditingController();
+    final descriptionController = TextEditingController();
+    final amountController = TextEditingController();
+    int? selection = 0;
+
+    showDialog(
+        context: context,
+        builder: (BuildContext ctx) => AlertDialog(
+              title: const Text("Add new Income/Expense"),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ToggleSwitch(
+                    initialLabelIndex: 0,
+                    totalSwitches: 2,
+                    minWidth: 110,
+                    inactiveBgColor: const Color.fromARGB(255, 230, 230, 230),
+                    labels: const ['Income', 'Expense'],
+                    onToggle: (index) {
+                      selection = index;
+                    },
+                  ),
+                  const Divider(),
+                  TextField(
+                    decoration: const InputDecoration(
+                        labelText: "Title", hintText: "Ex: Rental"),
+                    controller: titleController,
+                  ),
+                  TextField(
+                      decoration: const InputDecoration(
+                          labelText: "Description",
+                          hintText: "Further describe"),
+                      controller: descriptionController),
+                  TextField(
+                    decoration: const InputDecoration(
+                        labelText: "Amount", prefixText: "LKR. "),
+                    controller: amountController,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: <TextInputFormatter>[
+                      FilteringTextInputFormatter.digitsOnly
+                    ],
+                  )
+                ],
+              ),
+              actions: <Widget>[
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(ctx).pop();
+                  },
+                  child: const Text('Add'),
+                ),
+                OutlinedButton(
+                  onPressed: () {
+                    Navigator.of(ctx).pop();
+                  },
+                  child: const Text('Cancel'),
+                ),
+              ],
+            ));
+  }
+
   Route _onGenerateRoute(RouteSettings settings) {
     late Widget page = const HomePage();
 
@@ -140,10 +212,10 @@ class _MyHomePageState extends State<MyHomePage> {
         page = const HomePage();
         break;
       case Routes.income:
-        page = const IncomePage();
+        page = const IncomeExpensePage(mode: IncomeExpense.income);
         break;
       case Routes.expenses:
-        page = const ExpensesPage();
+        page = const IncomeExpensePage(mode: IncomeExpense.expense);
         break;
       case Routes.budget:
         page = const BudgetPage();

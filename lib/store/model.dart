@@ -1,3 +1,4 @@
+import 'package:personal_finance/budget/incomeExpense.dart';
 import 'package:sqflite/sqflite.dart';
 
 class Category
@@ -7,30 +8,40 @@ class Category
   final String type;
 
   const Category({
-    required this.id,
+    this.id = 0,
     required this.name,
     required this.type
   });
 
   Map<String, dynamic> toMap() {
     return {
-      "id": id,
       "name":  name,
-      "type": type == "income" ? 0 : 1
+      "type_id": type == "income" ? 0 : 1
     };
   }
 
-  Future<List<Category>> all(Database db) async {
-    final List<Map<String, dynamic>> maps = await db.query('category');
+  static Future<List<Category>> all(Database db, IncomeExpense mode) async {
+    final List<Map<String, dynamic>> maps =
+      await db.rawQuery('SELECT * FROM category WHERE category_id=?', [mode == IncomeExpense.income ? 0 : 1]);
 
     return List.generate(maps.length, (i) {
       return Category(
         id: maps[i]['id'],
         name: maps[i]['name'],
-        type: maps[i]['type'] == 0 ? "income" : "expense",
+        type: maps[i]['type_id'] == 0 ? "income" : "expense",
       );
     });
   }
+
+  static Future insert(Database db, Category category) async
+  {
+    return db.insert(
+      "category",
+      category.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.ignore
+    );
+  }
+
 }
 
 class Statement {
@@ -42,7 +53,7 @@ class Statement {
   final DateTime created;
 
   const Statement({
-    required this.id,
+    this.id = 0,
     required this.title,
     required this.description,
     required this.amount,
@@ -61,7 +72,7 @@ class Statement {
     };
   }
 
-  Future<List<Statement>> all(Database db) async {
+  static Future<List<Statement>> all(Database db) async {
     final List<Map<String, dynamic>> maps = await db.query('dogs');
 
     return List.generate(maps.length, (i) {
