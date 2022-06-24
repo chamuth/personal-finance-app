@@ -1,7 +1,7 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
-import 'package:personal_finance/budget/categoryItem.dart';
+import 'package:personal_finance/budget/category_item.dart';
 import 'package:personal_finance/database/database.dart';
 import 'package:personal_finance/shared/styles.dart';
 import 'package:personal_finance/store/model.dart';
@@ -19,10 +19,23 @@ class IncomeExpensePage extends StatefulWidget {
 
 class IncomeExpensePageState extends State<IncomeExpensePage> {
   static const mainPadding = EdgeInsets.all(5);
+  List<Category> cats = [];
+
+  void fetchCats() async {
+    var _cats = await Category.all(DB.database!, widget.mode);
+    setState(() {
+      cats = _cats;
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    fetchCats();
+  }
 
   @override
   Widget build(BuildContext context) {
-
     return Container(
         color: Backgrounds.pageBackground,
         child: Padding(
@@ -54,27 +67,21 @@ class IncomeExpensePageState extends State<IncomeExpensePage> {
                         const EdgeInsets.symmetric(vertical: 0, horizontal: 8)),
                 Expanded(
                     child: ListView(
-                  children: const [
-                    CategoryItem(
-                      icon: Icon(Icons.business, color: Colors.green),
-                      categoryName: "General Income",
-                    ),
-                    CategoryItem(
-                      icon: Icon(Icons.person, color: Colors.green),
-                      categoryName: "Side Hustle 😩",
-                    ),
-                  ],
+                  children: cats.map((cat) => (
+                        CategoryItem(
+                          icon: const Icon(Icons.business, color: Colors.green),
+                          categoryName: cat.name,
+                        )
+                    )).toList()
                 ))
               ],
             )));
   }
 
-  void createCategory(String name) async
-  {
+  void createCategory(String name) async {
     var cat = Category(
-      name: name,
-      type: widget.mode == IncomeExpense.income ? "income": "expense"
-    );
+        name: name,
+        type: widget.mode == IncomeExpense.income ? "income" : "expense");
 
     await Category.insert(DB.database!, cat);
     log("Inserted category");

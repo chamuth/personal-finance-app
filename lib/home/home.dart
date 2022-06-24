@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
-import 'package:personal_finance/home/statusItem.dart';
+import 'package:personal_finance/home/status_item.dart';
 import 'package:personal_finance/shared/styles.dart';
 import 'package:personal_finance/utils/currency.dart';
 

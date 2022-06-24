@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:personal_finance/budget/budget.dart';
-import 'package:personal_finance/budget/incomeExpense.dart';
+import 'package:personal_finance/budget/income_expense.dart';
 import 'package:personal_finance/home/home.dart';
 import 'package:toggle_switch/toggle_switch.dart';
 import 'consts/routes.dart';
 import 'database/database.dart';
+import 'package:flutter_redux/flutter_redux.dart';
+import 'package:redux/redux.dart';
+
+import 'store/store.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,29 +17,33 @@ void main() {
   // Create database
   DB.initialize();
 
-  runApp(const MyApp());
+  final store =
+      Store<AppStore>(AppStore.reducer, initialState: AppStore([], []));
+
+  runApp(MyApp(store: store));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({Key? key, required this.store}) : super(key: key);
+  final Store<AppStore> store;
 
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Personal Finance App',
-      theme: ThemeData(
-        primarySwatch: Colors.green,
-        // pageTransitionsTheme: const PageTransitionsTheme(
-        //   builders: {
-        //     TargetPlatform.android: ZoomPageTransitionsBuilder(),
-        //     TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
-        //   },
-        // ),
-      ),
-      debugShowCheckedModeBanner: false,
-      home: const MyHomePage(title: 'February, 2022'),
-    );
+    return StoreProvider(store: store, child: MaterialApp(
+          title: 'Personal Finance App',
+          theme: ThemeData(
+            primarySwatch: Colors.green,
+            pageTransitionsTheme: const PageTransitionsTheme(
+              builders: {
+                TargetPlatform.android: OpenUpwardsPageTransitionsBuilder(),
+                TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+              },
+            ),
+          ),
+          debugShowCheckedModeBanner: false,
+          home: const MyHomePage(title: 'February, 2022'),
+        ));
   }
 }
 

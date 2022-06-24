@@ -1,4 +1,4 @@
-import 'package:personal_finance/budget/incomeExpense.dart';
+import 'package:personal_finance/budget/income_expense.dart';
 import 'package:sqflite/sqflite.dart';
 
 class Category
@@ -22,7 +22,7 @@ class Category
 
   static Future<List<Category>> all(Database db, IncomeExpense mode) async {
     final List<Map<String, dynamic>> maps =
-      await db.rawQuery('SELECT * FROM category WHERE category_id=?', [mode == IncomeExpense.income ? 0 : 1]);
+      await db.rawQuery('SELECT * FROM category WHERE type_id=?', [mode == IncomeExpense.income ? 0 : 1]);
 
     return List.generate(maps.length, (i) {
       return Category(

@@ -2,8 +2,8 @@ import 'dart:developer';
 
 import 'package:expandable/expandable.dart';
 import 'package:flutter/material.dart';
-import 'package:personal_finance/budget/miniTransactionStatement.dart';
-import 'miniSumStatus.dart';
+import 'package:personal_finance/budget/mini_transaction_statement.dart';
+import 'mini_sum_status.dart';
 
 class CategoryItem extends StatefulWidget {
   const CategoryItem({Key? key, required this.categoryName, required this.icon}) : super(key: key);
