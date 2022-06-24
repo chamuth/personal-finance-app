@@ -30,7 +30,9 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return StoreProvider(store: store, child: MaterialApp(
+    return StoreProvider(
+        store: store,
+        child: MaterialApp(
           title: 'Personal Finance App',
           theme: ThemeData(
             primarySwatch: Colors.green,

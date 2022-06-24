@@ -10,7 +10,6 @@ class DB {
     var path = join(await getDatabasesPath(), "data.db");
 
     log("Creating database");
-    deleteDatabase(path);
 
     database = await openDatabase(
       path,
