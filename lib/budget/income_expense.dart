@@ -70,10 +70,10 @@ class IncomeExpensePageState extends State<IncomeExpensePage> {
                       builder: (context, cats) => ListView(
                           children: cats
                               .map((cat) => (CategoryItem(
-                                    icon: const Icon(Icons.business,
-                                        color: Colors.green),
-                                    categoryName: cat.category.name,
-                                  )))
+                                  icon: const Icon(Icons.business,
+                                      color: Colors.green),
+                                  categoryName: cat.category.name,
+                                  statements: cat.statements)))
                               .toList())))
             ])));
   }

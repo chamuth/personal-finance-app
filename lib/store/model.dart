@@ -1,4 +1,8 @@
+import 'dart:developer';
+
 import 'package:personal_finance/budget/income_expense.dart';
+import 'package:personal_finance/store/store.dart';
+import 'package:personal_finance/utils/month.dart';
 import 'package:sqflite/sqflite.dart';
 
 class Category {
@@ -12,16 +16,30 @@ class Category {
     return {"name": name, "type_id": type == "income" ? 0 : 1};
   }
 
-  static Future<List<Category>> all(Database db, IncomeExpense mode) async {
+  static Future<List<CategoryContent>> all(Database db,
+      IncomeExpense mode) async {
     final List<Map<String, dynamic>> maps = await db.rawQuery(
         'SELECT * FROM category WHERE type_id=?',
         [mode == IncomeExpense.income ? 0 : 1]);
 
+    // TODO: from current month
+    var between = MonthUtils.getBetween(2022, 6);
+    final List<Map<String, dynamic>> statements = await db.rawQuery(
+        'SELECT * FROM statement');
+
+    // log("${statements.length} ${statements[2]['category_id']} ${maps[0]['id']}");
+
     return List.generate(maps.length, (i) {
-      return Category(
-        id: maps[i]['id'],
-        name: maps[i]['name'],
-        type: maps[i]['type_id'] == 0 ? "income" : "expense",
+      return CategoryContent(
+          Category(
+            id: maps[i]['id'],
+            name: maps[i]['name'],
+            type: maps[i]['type_id'] == 0 ? "income" : "expense",
+          ),
+          statements.where((x) =>
+            x["category_id"] == maps[i]["id"]
+          ).map<Statement>(
+            (x) => Statement(title: x["title"], description: x["description"], amount: x["amount"], created: x["created"])).toList()
       );
     });
   }
@@ -37,40 +55,32 @@ class Statement {
   final String title;
   final String description;
   final double amount;
-  final int month;
-  final DateTime created;
+  final int created;
+  final bool recurring;
+  final int categoryId;
 
-  const Statement(
-      {this.id = 0,
-      required this.title,
-      required this.description,
-      required this.amount,
-      required this.month,
-      required this.created});
+  const Statement({this.id = 0,
+    required this.title,
+    required this.description,
+    required this.amount,
+    required this.created,
+    this.recurring = false,
+    this.categoryId = 0});
 
   Map<String, dynamic> toMap() {
     return {
-      "id": id,
       "title": title,
       "description": description,
       "amount": amount,
-      "month": month,
-      "created": created
+      "created": created,
+      "recurring": recurring ? 1 : 0,
+      "category_id": categoryId
     };
   }
 
-  static Future<List<Statement>> all(Database db) async {
-    final List<Map<String, dynamic>> maps = await db.query('dogs');
-
-    return List.generate(maps.length, (i) {
-      return Statement(
-        id: maps[i]['id'],
-        title: maps[i]['title'],
-        description: maps[i]['description'],
-        amount: maps[i]['amount'],
-        month: maps[i]['month'],
-        created: maps[i]['created'],
-      );
-    });
+  static Future insert(Database db, Statement statement) async {
+    log("INSERTING ${statement.title} INTO ${statement.categoryId}");
+    return db.insert("statement", statement.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.ignore);
   }
 }

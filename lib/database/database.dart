@@ -10,6 +10,7 @@ class DB {
     var path = join(await getDatabasesPath(), "data.db");
 
     log("Creating database");
+    // await deleteDatabase(path);
 
     database = await openDatabase(
       path,
@@ -44,7 +45,15 @@ class DB {
           [month] 20 months (since 2000) for SQL querying
           [created] ISO time string
         */
-        ct("CREATE TABLE statement(id INTEGER PRIMARY KEY, title TEXT, description TEXT, amount REAL, month INTEGER, created TEXT)");
+        ct("CREATE TABLE statement("
+            "id INTEGER PRIMARY KEY,"
+            "title TEXT,"
+            "description TEXT,"
+            "amount REAL,"
+            "created INTEGER,"
+            "category_id INT,"
+            "recurring INT"
+            ")");
 
         log("Populated all tables");
       },

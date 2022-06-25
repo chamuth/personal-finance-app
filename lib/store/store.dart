@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:developer';
 import '../database/database.dart';
 import 'model.dart';
@@ -23,7 +24,7 @@ class CreateCategoryType {
   CreateCategoryType(this.name, this.type);
 }
 
-enum AppStoreActions { updateCategories, createCategory }
+enum AppStoreActions { updateCategories, createCategory, addStatement }
 
 class AppStore {
   late List<CategoryContent> incomeCategories;
@@ -36,16 +37,8 @@ class AppStore {
       case AppStoreActions.updateCategories:
         var categories = action.payload;
         if (categories.length > 0) {
-          var cats = categories
-              .map<CategoryContent>((Category cat) =>
-              CategoryContent(cat, []))
-              .toList();
-
-          if (categories[0].type == "income") {
-            previous.incomeCategories = cats;
-          } else {
-            previous.expenseCategories = cats;
-          }
+          previous.incomeCategories = categories.where((x) => x.category.type == "income").toList();
+          previous.expenseCategories = categories.where((x) => x.category.type == "expense").toList();
         }
         break;
       case AppStoreActions.createCategory:
@@ -63,8 +56,32 @@ class AppStore {
           previous.expenseCategories
               .add(CategoryContent(Category(name: name, type: type), []));
         }
+        break;
+      case AppStoreActions.addStatement:
+        var statement = action.payload;
 
-        return previous;
+        Statement.insert(DB.database!, statement);
+
+        // local
+        previous.incomeCategories =
+            previous.incomeCategories.map<CategoryContent>((c) {
+          if (c.category.id == statement.categoryId) {
+            c.statements.add(statement);
+          }
+
+          return c;
+        }).toList();
+
+        previous.expenseCategories =
+            previous.expenseCategories.map<CategoryContent>((c) {
+          if (c.category.id == statement.categoryId) {
+            c.statements.add(statement);
+          }
+
+          return c;
+        }).toList();
+
+        break;
     }
 
     return previous;

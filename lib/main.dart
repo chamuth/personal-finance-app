@@ -3,12 +3,14 @@ import 'package:flutter/services.dart';
 import 'package:personal_finance/budget/budget.dart';
 import 'package:personal_finance/budget/income_expense.dart';
 import 'package:personal_finance/home/home.dart';
+import 'package:personal_finance/utils/month.dart';
 import 'package:toggle_switch/toggle_switch.dart';
 import 'consts/routes.dart';
 import 'database/database.dart';
 import 'package:flutter_redux/flutter_redux.dart';
 import 'package:redux/redux.dart';
 
+import 'store/model.dart';
 import 'store/store.dart';
 
 void main() {
@@ -63,7 +65,6 @@ class _MyHomePageState extends State<MyHomePage> {
   var tabs = [Routes.home, Routes.income, Routes.expenses, Routes.budget];
   final _navigatorKey = GlobalKey<NavigatorState>();
 
-  int? createSelectedCategory;
   int? createSelectionType = 0;
 
   @override
@@ -171,6 +172,8 @@ class _MyHomePageState extends State<MyHomePage> {
     final titleController = TextEditingController();
     final descriptionController = TextEditingController();
     final amountController = TextEditingController();
+    bool isMonthly = false;
+    int? createSelectedCategory;
 
     showDialog(
         context: context,
@@ -212,7 +215,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                 items: cats
                                     .map<DropdownMenuItem<int>>((cat) =>
                                         DropdownMenuItem(
-                                            child: Text(cat.category.name),
+                                            child: Text(cat.category.name + "(${cat.category.id})"),
                                             value: cat.category.id))
                                     .toList(),
                                 onChanged: (v) => {
@@ -237,22 +240,52 @@ class _MyHomePageState extends State<MyHomePage> {
                             if (cats.isNotEmpty)
                               TextField(
                                 decoration: const InputDecoration(
-                                    labelText: "Amount", prefixText: "LKR. "),
+                                    labelText: "Amount",
+                                    prefixStyle:
+                                        TextStyle(fontWeight: FontWeight.bold),
+                                    prefixText: "LKR. "),
                                 controller: amountController,
                                 keyboardType: TextInputType.number,
                                 inputFormatters: <TextInputFormatter>[
                                   FilteringTextInputFormatter.digitsOnly
                                 ],
+                              ),
+                            const Divider(),
+                            if (cats.isNotEmpty)
+                              CheckboxListTile(
+                                title: const Text('Monthly'),
+                                value: isMonthly,
+                                onChanged: (bool? value) {
+                                  setState(() {
+                                    isMonthly = value == true;
+                                  });
+                                },
+                                secondary: const Icon(
+                                    Icons.calendar_view_month_outlined),
                               )
                           ],
                         )),
                 actions: <Widget>[
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(ctx).pop();
-                    },
-                    child: const Text('Add'),
-                  ),
+                  StoreConnector<AppStore, VoidCallback>(
+                      converter: (store) {
+                        return () => store.dispatch(DispatchType(
+                            AppStoreActions.addStatement,
+                            Statement(
+                              title: titleController.text,
+                              description: descriptionController.text,
+                              amount: double.parse(amountController.text),
+                              created: MonthUtils.serialize(DateTime.now()),
+                              recurring: isMonthly == true,
+                              categoryId: createSelectedCategory ?? -1
+                            )));
+                      },
+                      builder: (context, callback) => ElevatedButton(
+                            onPressed: () {
+                              callback();
+                              Navigator.of(ctx).pop();
+                            },
+                            child: const Text('Add'),
+                          )),
                   OutlinedButton(
                     onPressed: () {
                       Navigator.of(ctx).pop();
