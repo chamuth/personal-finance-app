@@ -1,10 +1,13 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_redux/flutter_redux.dart';
 import 'package:personal_finance/budget/category_item.dart';
 import 'package:personal_finance/database/database.dart';
 import 'package:personal_finance/shared/styles.dart';
 import 'package:personal_finance/store/model.dart';
+
+import '../store/store.dart';
 
 enum IncomeExpense { income, expense }
 
@@ -19,19 +22,10 @@ class IncomeExpensePage extends StatefulWidget {
 
 class IncomeExpensePageState extends State<IncomeExpensePage> {
   static const mainPadding = EdgeInsets.all(5);
-  List<Category> cats = [];
-
-  void fetchCats() async {
-    var _cats = await Category.all(DB.database!, widget.mode);
-    setState(() {
-      cats = _cats;
-    });
-  }
 
   @override
   void initState() {
     super.initState();
-    fetchCats();
   }
 
   @override
@@ -40,55 +34,58 @@ class IncomeExpensePageState extends State<IncomeExpensePage> {
         color: Backgrounds.pageBackground,
         child: Padding(
             padding: mainPadding,
-            child: Column(
-              children: [
-                Padding(
-                    child: Row(
-                      children: [
-                        Expanded(
-                            child: Text(
-                          "${widget.mode == IncomeExpense.income ? "Income" : "Expense"} Categories",
-                          style: const TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold),
-                        )),
-                        OutlinedButton(
-                            onPressed: () => createCategoryDialog(context),
-                            child: Row(
-                              children: const [
-                                Padding(
-                                    child: Icon(Icons.add, size: 18),
-                                    padding: EdgeInsets.only(right: 5)),
-                                Text("Create Category")
-                              ],
-                            )),
-                      ],
-                    ),
-                    padding:
-                        const EdgeInsets.symmetric(vertical: 0, horizontal: 8)),
-                Expanded(
-                    child: ListView(
-                  children: cats.map((cat) => (
-                        CategoryItem(
-                          icon: const Icon(Icons.business, color: Colors.green),
-                          categoryName: cat.name,
-                        )
-                    )).toList()
-                ))
-              ],
-            )));
+            child: Column(children: [
+              Padding(
+                  child: Row(
+                    children: [
+                      Expanded(
+                          child: Text(
+                        "${widget.mode == IncomeExpense.income ? "Income" : "Expense"} Categories",
+                        style: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold),
+                      )),
+                      OutlinedButton(
+                          onPressed: () => createCategoryDialog(context),
+                          child: Row(
+                            children: const [
+                              Padding(
+                                  child: Icon(Icons.add, size: 18),
+                                  padding: EdgeInsets.only(right: 5)),
+                              Text("Create Category")
+                            ],
+                          )),
+                    ],
+                  ),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 0, horizontal: 8)),
+              Expanded(
+                  child: StoreConnector<AppStore, List<CategoryContent>>(
+                      converter: (store) {
+                        if (widget.mode == IncomeExpense.income) {
+                          return store.state.incomeCategories;
+                        }
+                        return store.state.expenseCategories;
+                      },
+                      onInit: onInit,
+                      builder: (context, cats) => ListView(
+                          children: cats
+                              .map((cat) => (CategoryItem(
+                                    icon: const Icon(Icons.business,
+                                        color: Colors.green),
+                                    categoryName: cat.category.name,
+                                  )))
+                              .toList())))
+            ])));
   }
 
-  void createCategory(String name) async {
-    var cat = Category(
-        name: name,
-        type: widget.mode == IncomeExpense.income ? "income" : "expense");
-
-    await Category.insert(DB.database!, cat);
-    log("Inserted category");
+  void onInit(store) async {
+    var categories = await Category.all(DB.database!, widget.mode);
+    store.dispatch(DispatchType(AppStoreActions.updateCategories, categories));
   }
 
   void createCategoryDialog(BuildContext context) {
     final titleController = TextEditingController();
+    String? errorText;
 
     showDialog(
         context: context,
@@ -98,19 +95,40 @@ class IncomeExpensePageState extends State<IncomeExpensePage> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   TextField(
-                    decoration: const InputDecoration(
-                        labelText: "Category Name", hintText: "Ex: Work"),
+                    decoration: InputDecoration(
+                        labelText: "Category Name",
+                        hintText: "Ex: Work",
+                        errorText: errorText),
                     controller: titleController,
                   ),
                 ],
               ),
               actions: <Widget>[
-                ElevatedButton(
-                  onPressed: () {
-                    createCategory(titleController.text);
-                    Navigator.of(ctx).pop();
+                StoreConnector<AppStore, VoidCallback>(
+                  converter: (store) {
+                    return () => store.dispatch(DispatchType(
+                        AppStoreActions.createCategory,
+                        CreateCategoryType(
+                            titleController.text,
+                            widget.mode == IncomeExpense.income
+                                ? "income"
+                                : "expense")));
                   },
-                  child: const Text('Create Category'),
+                  builder: (context, callback) {
+                    return ElevatedButton(
+                      onPressed: () {
+                        if (titleController.text.isEmpty) {
+                          setState(() {
+                            errorText = "Empty category name";
+                          });
+                          return;
+                        }
+                        callback();
+                        Navigator.of(ctx).pop();
+                      },
+                      child: const Text('Create Category'),
+                    );
+                  },
                 ),
                 OutlinedButton(
                   onPressed: () {

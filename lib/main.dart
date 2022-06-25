@@ -63,6 +63,9 @@ class _MyHomePageState extends State<MyHomePage> {
   var tabs = [Routes.home, Routes.income, Routes.expenses, Routes.budget];
   final _navigatorKey = GlobalKey<NavigatorState>();
 
+  int? createSelectedCategory;
+  int? createSelectionType = 0;
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -113,6 +116,18 @@ class _MyHomePageState extends State<MyHomePage> {
                   currentTab = i;
                   _navigatorKey.currentState!.pushNamed(tabs[i]);
                 }
+
+                if (i == 1) {
+                  setState(() {
+                    createSelectionType = 0;
+                  });
+                }
+
+                if (i == 2) {
+                  setState(() {
+                    createSelectionType = 1;
+                  });
+                }
               })
             },
             type: BottomNavigationBarType.fixed,
@@ -156,62 +171,97 @@ class _MyHomePageState extends State<MyHomePage> {
     final titleController = TextEditingController();
     final descriptionController = TextEditingController();
     final amountController = TextEditingController();
-    int? selection = 0;
 
     showDialog(
         context: context,
-        builder: (BuildContext ctx) => AlertDialog(
-              title: const Text("Add new Income/Expense"),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  ToggleSwitch(
-                    initialLabelIndex: 0,
-                    totalSwitches: 2,
-                    minWidth: 110,
-                    inactiveBgColor: const Color.fromARGB(255, 230, 230, 230),
-                    labels: const ['Income', 'Expense'],
-                    onToggle: (index) {
-                      selection = index;
+        builder: (BuildContext ctx) =>
+            StatefulBuilder(builder: (BuildContext ctx, StateSetter setState) {
+              return AlertDialog(
+                title: const Text("Add new Income/Expense"),
+                content: StoreConnector<AppStore, List<CategoryContent>>(
+                    converter: (store) {
+                      if (createSelectionType == 0) {
+                        return store.state.incomeCategories;
+                      }
+
+                      return store.state.expenseCategories;
                     },
+                    builder: (context, cats) => Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            ToggleSwitch(
+                              initialLabelIndex: createSelectionType,
+                              totalSwitches: 2,
+                              minWidth: 110,
+                              inactiveBgColor:
+                                  const Color.fromARGB(255, 230, 230, 230),
+                              labels: const ['Income', 'Expense'],
+                              onToggle: (index) {
+                                setState(() {
+                                  createSelectionType = index;
+                                });
+                              },
+                            ),
+                            const Divider(),
+                            DropdownButton<int>(
+                                value: createSelectedCategory,
+                                hint: Text(cats.isNotEmpty
+                                    ? "Select category"
+                                    : "No categories found"),
+                                items: cats
+                                    .map<DropdownMenuItem<int>>((cat) =>
+                                        DropdownMenuItem(
+                                            child: Text(cat.category.name),
+                                            value: cat.category.id))
+                                    .toList(),
+                                onChanged: (v) => {
+                                      setState(() {
+                                        createSelectedCategory = v;
+                                      })
+                                    }),
+                            if (cats.isNotEmpty)
+                              TextField(
+                                decoration: const InputDecoration(
+                                  labelText: "Title",
+                                  hintText: "Ex: Rental",
+                                ),
+                                controller: titleController,
+                              ),
+                            if (cats.isNotEmpty)
+                              TextField(
+                                  decoration: const InputDecoration(
+                                      labelText: "Description",
+                                      hintText: "Further describe"),
+                                  controller: descriptionController),
+                            if (cats.isNotEmpty)
+                              TextField(
+                                decoration: const InputDecoration(
+                                    labelText: "Amount", prefixText: "LKR. "),
+                                controller: amountController,
+                                keyboardType: TextInputType.number,
+                                inputFormatters: <TextInputFormatter>[
+                                  FilteringTextInputFormatter.digitsOnly
+                                ],
+                              )
+                          ],
+                        )),
+                actions: <Widget>[
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(ctx).pop();
+                    },
+                    child: const Text('Add'),
                   ),
-                  const Divider(),
-                  TextField(
-                    decoration: const InputDecoration(
-                        labelText: "Title", hintText: "Ex: Rental"),
-                    controller: titleController,
+                  OutlinedButton(
+                    onPressed: () {
+                      Navigator.of(ctx).pop();
+                    },
+                    child: const Text('Cancel'),
                   ),
-                  TextField(
-                      decoration: const InputDecoration(
-                          labelText: "Description",
-                          hintText: "Further describe"),
-                      controller: descriptionController),
-                  TextField(
-                    decoration: const InputDecoration(
-                        labelText: "Amount", prefixText: "LKR. "),
-                    controller: amountController,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: <TextInputFormatter>[
-                      FilteringTextInputFormatter.digitsOnly
-                    ],
-                  )
                 ],
-              ),
-              actions: <Widget>[
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.of(ctx).pop();
-                  },
-                  child: const Text('Add'),
-                ),
-                OutlinedButton(
-                  onPressed: () {
-                    Navigator.of(ctx).pop();
-                  },
-                  child: const Text('Cancel'),
-                ),
-              ],
-            ));
+              );
+            }));
   }
 
   Route _onGenerateRoute(RouteSettings settings) {
