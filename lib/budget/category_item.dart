@@ -55,9 +55,10 @@ class CategoryItemState extends State<CategoryItem> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             mainAxisSize: MainAxisSize.max,
-            children: const [
+            children: [
               MiniSumStatus(
                 title: "Income",
+                value: widget.statements.map((x) => x.amount).reduce((v1, v2) => v1 + v2),
               ),
               MiniSumStatus(
                 title: "Goal",
