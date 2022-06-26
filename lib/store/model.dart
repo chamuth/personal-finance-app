@@ -16,16 +16,13 @@ class Category {
     return {"name": name, "type_id": type == "income" ? 0 : 1};
   }
 
-  static Future<List<CategoryContent>> all(Database db,
-      IncomeExpense mode) async {
-    final List<Map<String, dynamic>> maps = await db.rawQuery(
-        'SELECT * FROM category WHERE type_id=?',
-        [mode == IncomeExpense.income ? 0 : 1]);
+  static Future<List<CategoryContent>> all(Database db) async {
+    final List<Map<String, dynamic>> maps = await db.rawQuery('SELECT * FROM category');
 
     // TODO: from current month
     var between = MonthUtils.getBetween(2022, 6);
     final List<Map<String, dynamic>> statements = await db.rawQuery(
-        'SELECT * FROM statement');
+        'SELECT * FROM statement WHERE created > ? AND created < ?', between);
 
     // log("${statements.length} ${statements[2]['category_id']} ${maps[0]['id']}");
 

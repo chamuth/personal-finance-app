@@ -9,19 +9,27 @@ import 'package:flutter_redux/flutter_redux.dart';
 import 'package:redux/redux.dart';
 
 import 'shared/adder.dart';
+import 'store/model.dart';
 import 'store/store.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Create database
-  DB.initialize();
+  await DB.initialize();
 
   var now = DateTime.now();
   final store = Store<AppStore>(AppStore.reducer,
       initialState: AppStore([], [], Timeframe(now.year, now.month)));
 
+  loadData(store);
+
   runApp(MyApp(store: store));
+}
+
+void loadData(Store<AppStore> store) async {
+  var categories = await Category.all(DB.database!);
+  store.dispatch(DispatchType(AppStoreActions.updateCategories, categories));
 }
 
 class MyApp extends StatelessWidget {

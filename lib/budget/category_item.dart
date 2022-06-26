@@ -105,31 +105,16 @@ class CategoryItemState extends State<CategoryItem> {
                     style: const TextStyle(color: Colors.grey)),
                 padding: const EdgeInsets.symmetric(vertical: 15)),
           if (widget.statements.isNotEmpty)
-            ExpandablePanel(
-                collapsed: Opacity(
-                    child: MiniTransactionStatement(
-                        title: widget.statements[0].title,
-                        description: widget.statements[0].description,
-                        amount: widget.statements[0].amount,
-                        type: widget.type),
-                    opacity: 0.5),
-                header: Padding(
-                  child: Text(
-                      "Show all statements (${widget.statements.length})",
-                      style: const TextStyle(
-                          fontSize: 15, fontWeight: FontWeight.bold)),
-                  padding: const EdgeInsets.only(top: 10, left: 9),
-                ),
-                expanded: Column(
-                  children: widget.statements
-                      .map<MiniTransactionStatement>((statement) {
-                    return MiniTransactionStatement(
-                        title: statement.title,
-                        description: statement.description,
-                        amount: statement.amount,
-                        type: widget.type);
-                  }).toList(),
-                )),
+            Column(
+              children: widget.statements
+                  .map<MiniTransactionStatement>((statement) {
+                return MiniTransactionStatement(
+                    title: statement.title,
+                    description: statement.description,
+                    amount: statement.amount,
+                    type: widget.type);
+              }).toList(),
+            ),
           const Divider(
             color: Colors.transparent,
             height: 8,

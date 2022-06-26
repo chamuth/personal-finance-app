@@ -81,8 +81,7 @@ class IncomeExpensePageState extends State<IncomeExpensePage> {
   }
 
   void onInit(store) async {
-    var categories = await Category.all(DB.database!, widget.mode);
-    store.dispatch(DispatchType(AppStoreActions.updateCategories, categories));
+    // empty
   }
 
   void createCategoryDialog(BuildContext context) {

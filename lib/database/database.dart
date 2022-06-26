@@ -6,7 +6,7 @@ import 'package:sqflite/sqflite.dart';
 class DB {
   static Database? database;
 
-  static void initialize() async {
+  static Future initialize() async {
     var path = join(await getDatabasesPath(), "data.db");
 
     log("Creating database");
