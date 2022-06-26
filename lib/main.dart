@@ -109,8 +109,10 @@ class _MyHomePageState extends State<MyHomePage> {
                   drawer: Drawer(
                     backgroundColor: const Color.fromARGB(255, 220, 250, 220),
                     child: StoreConnector<AppStore, Function(Timeframe)>(
-                      converter: (store) => (Timeframe tf) => store.dispatch(
-                          DispatchType(AppStoreActions.updateTimeFrame, tf)),
+                      converter: (store) => ((Timeframe tf) {
+                        store.dispatch(DispatchType(AppStoreActions.updateTimeFrame, tf));
+                        loadData(store, tf);
+                      }),
                       builder: (context, dispatch) => ListView(
                         children: [
                           DrawerHeader(
