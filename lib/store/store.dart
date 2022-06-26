@@ -1,5 +1,3 @@
-import 'dart:convert';
-import 'dart:developer';
 import '../database/database.dart';
 import 'model.dart';
 
@@ -26,11 +24,19 @@ class CreateCategoryType {
 
 enum AppStoreActions { updateCategories, createCategory, addStatement }
 
+class Timeframe {
+  final int year;
+  final int month;
+
+  Timeframe(this.year, this.month);
+}
+
 class AppStore {
   late List<CategoryContent> incomeCategories;
   late List<CategoryContent> expenseCategories;
+  late Timeframe timeframe;
 
-  AppStore(this.incomeCategories, this.expenseCategories);
+  AppStore(this.incomeCategories, this.expenseCategories, this.timeframe);
 
   static AppStore reducer(AppStore previous, action) {
     switch (action.type) {

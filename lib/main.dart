@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import 'package:personal_finance/budget/budget.dart';
 import 'package:personal_finance/budget/income_expense.dart';
 import 'package:personal_finance/home/home.dart';
-import 'package:personal_finance/utils/month.dart';
-import 'package:toggle_switch/toggle_switch.dart';
 import 'consts/routes.dart';
 import 'database/database.dart';
 import 'package:flutter_redux/flutter_redux.dart';
 import 'package:redux/redux.dart';
 
-import 'store/model.dart';
+import 'shared/adder.dart';
 import 'store/store.dart';
 
 void main() {
@@ -19,8 +17,9 @@ void main() {
   // Create database
   DB.initialize();
 
-  final store =
-      Store<AppStore>(AppStore.reducer, initialState: AppStore([], []));
+  var now = DateTime.now();
+  final store = Store<AppStore>(AppStore.reducer,
+      initialState: AppStore([], [], Timeframe(now.year, now.month)));
 
   runApp(MyApp(store: store));
 }
@@ -46,7 +45,7 @@ class MyApp extends StatelessWidget {
             ),
           ),
           debugShowCheckedModeBanner: false,
-          home: const MyHomePage(title: 'February, 2022'),
+          home: const MyHomePage(title: 'Personal Finance App'),
         ));
   }
 }
@@ -63,6 +62,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   var currentTab = 0;
   var tabs = [Routes.home, Routes.income, Routes.expenses, Routes.budget];
+  var tabTitles = ["Home", "Income", "Expense", "Budget"];
   final _navigatorKey = GlobalKey<NavigatorState>();
 
   int? createSelectionType = 0;
@@ -77,224 +77,98 @@ class _MyHomePageState extends State<MyHomePage> {
               return false;
             }
           }
-
           return true;
         },
-        child: Scaffold(
-          appBar: AppBar(
-              title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(widget.title),
-              const Text("Home",
-                  style: TextStyle(
-                      fontSize: 15, color: Color.fromARGB(150, 255, 255, 255)))
-            ],
-          )),
-          drawer: Drawer(
-              child: ListView(
-            children: [
-              for (var i = 2022; i > 2001; i--)
-                ListTile(
-                  title: Text("February $i"),
-                  trailing:
-                      const Icon(Icons.arrow_forward, color: Colors.green),
-                  onTap: () {},
-                ),
-            ],
-          )),
-          body: Center(
-              child: Navigator(
-            key: _navigatorKey,
-            initialRoute: "/",
-            onGenerateRoute: _onGenerateRoute,
-          )),
-          bottomNavigationBar: BottomNavigationBar(
-            currentIndex: currentTab,
-            onTap: (i) => {
-              setState(() {
-                if (currentTab != i) {
-                  currentTab = i;
-                  _navigatorKey.currentState!.pushNamed(tabs[i]);
-                }
+        child: StoreConnector<AppStore, Timeframe>(
+            converter: (store) => store.state.timeframe,
+            builder: (context, tf) => Scaffold(
+                  appBar: AppBar(
+                      title: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(DateFormat("MMMM, y").format(DateTime(tf.year, tf.month))),
+                      Text(tabTitles[currentTab],
+                          style: const TextStyle(
+                              fontSize: 15,
+                              color: Color.fromARGB(150, 255, 255, 255)))
+                    ],
+                  )),
+                  drawer: Drawer(
+                      child: ListView(
+                    children: [
+                      for (var i = tf.year; i > 2001; i--)
+                        ListTile(
+                          title: Text("February $i"),
+                          trailing: const Icon(Icons.arrow_forward,
+                              color: Colors.green),
+                          onTap: () {},
+                        ),
+                    ],
+                  )),
+                  body: Center(
+                      child: Navigator(
+                    key: _navigatorKey,
+                    initialRoute: "/",
+                    onGenerateRoute: _onGenerateRoute,
+                  )),
+                  bottomNavigationBar: BottomNavigationBar(
+                    currentIndex: currentTab,
+                    onTap: (i) => {
+                      setState(() {
+                        if (currentTab != i) {
+                          currentTab = i;
+                          _navigatorKey.currentState!.pushNamed(tabs[i]);
+                        }
 
-                if (i == 1) {
-                  setState(() {
-                    createSelectionType = 0;
-                  });
-                }
+                        if (i == 1) {
+                          setState(() {
+                            createSelectionType = 0;
+                          });
+                        }
 
-                if (i == 2) {
-                  setState(() {
-                    createSelectionType = 1;
-                  });
-                }
-              })
-            },
-            type: BottomNavigationBarType.fixed,
-            items: const <BottomNavigationBarItem>[
-              BottomNavigationBarItem(
-                icon: Icon(Icons.dashboard),
-                label: 'Home',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.arrow_downward),
-                label: 'Income',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.arrow_upward),
-                label: 'Expenses',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.auto_graph),
-                label: 'Budget',
-              ),
-            ],
-          ),
-          floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-          floatingActionButton: FloatingActionButton.extended(
-            backgroundColor: Colors.orange,
-            foregroundColor: Colors.black,
-            shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.all(Radius.circular(15))),
-            onPressed: () => addStatement(context),
-            tooltip: 'Add Income or Expense',
-            label: const Text("Add"),
-            icon: const Icon(
-              Icons.add,
-              size: 28,
-            ),
-          ),
-        ));
-  }
-
-  void addStatement(BuildContext context) {
-    final titleController = TextEditingController();
-    final descriptionController = TextEditingController();
-    final amountController = TextEditingController();
-    bool isMonthly = false;
-    int? createSelectedCategory;
-
-    showDialog(
-        context: context,
-        builder: (BuildContext ctx) =>
-            StatefulBuilder(builder: (BuildContext ctx, StateSetter setState) {
-              return AlertDialog(
-                title: const Text("Add new Income/Expense"),
-                content: StoreConnector<AppStore, List<CategoryContent>>(
-                    converter: (store) {
-                      if (createSelectionType == 0) {
-                        return store.state.incomeCategories;
-                      }
-
-                      return store.state.expenseCategories;
+                        if (i == 2) {
+                          setState(() {
+                            createSelectionType = 1;
+                          });
+                        }
+                      })
                     },
-                    builder: (context, cats) => Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            ToggleSwitch(
-                              initialLabelIndex: createSelectionType,
-                              totalSwitches: 2,
-                              minWidth: 110,
-                              inactiveBgColor:
-                                  const Color.fromARGB(255, 230, 230, 230),
-                              labels: const ['Income', 'Expense'],
-                              onToggle: (index) {
-                                setState(() {
-                                  createSelectionType = index;
-                                });
-                              },
-                            ),
-                            const Divider(),
-                            DropdownButton<int>(
-                                value: createSelectedCategory,
-                                hint: Text(cats.isNotEmpty
-                                    ? "Select category"
-                                    : "No categories found"),
-                                items: cats
-                                    .map<DropdownMenuItem<int>>((cat) =>
-                                        DropdownMenuItem(
-                                            child: Text(cat.category.name + "(${cat.category.id})"),
-                                            value: cat.category.id))
-                                    .toList(),
-                                onChanged: (v) => {
-                                      setState(() {
-                                        createSelectedCategory = v;
-                                      })
-                                    }),
-                            if (cats.isNotEmpty)
-                              TextField(
-                                decoration: const InputDecoration(
-                                  labelText: "Title",
-                                  hintText: "Ex: Rental",
-                                ),
-                                controller: titleController,
-                              ),
-                            if (cats.isNotEmpty)
-                              TextField(
-                                  decoration: const InputDecoration(
-                                      labelText: "Description",
-                                      hintText: "Further describe"),
-                                  controller: descriptionController),
-                            if (cats.isNotEmpty)
-                              TextField(
-                                decoration: const InputDecoration(
-                                    labelText: "Amount",
-                                    prefixStyle:
-                                        TextStyle(fontWeight: FontWeight.bold),
-                                    prefixText: "LKR. "),
-                                controller: amountController,
-                                keyboardType: TextInputType.number,
-                                inputFormatters: <TextInputFormatter>[
-                                  FilteringTextInputFormatter.digitsOnly
-                                ],
-                              ),
-                            const Divider(),
-                            if (cats.isNotEmpty)
-                              CheckboxListTile(
-                                title: const Text('Monthly'),
-                                value: isMonthly,
-                                onChanged: (bool? value) {
-                                  setState(() {
-                                    isMonthly = value == true;
-                                  });
-                                },
-                                secondary: const Icon(
-                                    Icons.calendar_view_month_outlined),
-                              )
-                          ],
-                        )),
-                actions: <Widget>[
-                  StoreConnector<AppStore, VoidCallback>(
-                      converter: (store) {
-                        return () => store.dispatch(DispatchType(
-                            AppStoreActions.addStatement,
-                            Statement(
-                              title: titleController.text,
-                              description: descriptionController.text,
-                              amount: double.parse(amountController.text),
-                              created: MonthUtils.serialize(DateTime.now()),
-                              recurring: isMonthly == true,
-                              categoryId: createSelectedCategory ?? -1
-                            )));
-                      },
-                      builder: (context, callback) => ElevatedButton(
-                            onPressed: () {
-                              callback();
-                              Navigator.of(ctx).pop();
-                            },
-                            child: const Text('Add'),
-                          )),
-                  OutlinedButton(
-                    onPressed: () {
-                      Navigator.of(ctx).pop();
-                    },
-                    child: const Text('Cancel'),
+                    type: BottomNavigationBarType.fixed,
+                    items: const <BottomNavigationBarItem>[
+                      BottomNavigationBarItem(
+                        icon: Icon(Icons.dashboard),
+                        label: 'Home',
+                      ),
+                      BottomNavigationBarItem(
+                        icon: Icon(Icons.arrow_downward),
+                        label: 'Income',
+                      ),
+                      BottomNavigationBarItem(
+                        icon: Icon(Icons.arrow_upward),
+                        label: 'Expenses',
+                      ),
+                      BottomNavigationBarItem(
+                        icon: Icon(Icons.auto_graph),
+                        label: 'Budget',
+                      ),
+                    ],
                   ),
-                ],
-              );
-            }));
+                  floatingActionButtonLocation:
+                      FloatingActionButtonLocation.endFloat,
+                  floatingActionButton: FloatingActionButton.extended(
+                    backgroundColor: Colors.orange,
+                    foregroundColor: Colors.black,
+                    shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(15))),
+                    onPressed: () => StatementAdder.addStatement(context, createSelectionType),
+                    tooltip: 'Add Income or Expense',
+                    label: const Text("Add"),
+                    icon: const Icon(
+                      Icons.add,
+                      size: 28,
+                    ),
+                  ),
+                )));
   }
 
   Route _onGenerateRoute(RouteSettings settings) {

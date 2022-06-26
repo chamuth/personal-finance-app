@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_redux/flutter_redux.dart';
 import 'package:personal_finance/budget/category_item.dart';
@@ -67,11 +65,15 @@ class IncomeExpensePageState extends State<IncomeExpensePage> {
                         return store.state.expenseCategories;
                       },
                       onInit: onInit,
-                      builder: (context, cats) => ListView(
+                      builder: (ctx, cats) => ListView(
                           children: cats
                               .map((cat) => (CategoryItem(
-                                  icon: const Icon(Icons.business,
-                                      color: Colors.green),
+                                  type: widget.mode,
+                                  catId: cat.category.id,
+                                  icon: Icon(Icons.business,
+                                      color: widget.mode == IncomeExpense.income
+                                          ? Colors.green
+                                          : Colors.red),
                                   categoryName: cat.category.name,
                                   statements: cat.statements)))
                               .toList())))

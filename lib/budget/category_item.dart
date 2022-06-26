@@ -1,20 +1,26 @@
 import 'package:expandable/expandable.dart';
 import 'package:flutter/material.dart';
+import 'package:personal_finance/budget/income_expense.dart';
+import 'package:personal_finance/shared/adder.dart';
 import '../store/model.dart';
 import 'mini_sum_status.dart';
 import 'mini_transaction_statement.dart';
 
 class CategoryItem extends StatefulWidget {
-  const CategoryItem(
-      {Key? key,
-      required this.categoryName,
-      required this.icon,
-      required this.statements})
-      : super(key: key);
+  const CategoryItem({
+    Key? key,
+    required this.categoryName,
+    required this.icon,
+    required this.statements,
+    required this.catId,
+    this.type = IncomeExpense.income,
+  }) : super(key: key);
 
+  final int catId;
   final String categoryName;
   final Widget icon;
   final List<Statement> statements;
+  final IncomeExpense type;
 
   @override
   State<StatefulWidget> createState() => CategoryItemState();
@@ -23,11 +29,10 @@ class CategoryItem extends StatefulWidget {
 class CategoryItemState extends State<CategoryItem> {
   static const mainPadding = EdgeInsets.symmetric(vertical: 10, horizontal: 10);
 
-  static const categoryTitleStyle =
-      TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.green);
-
   @override
   Widget build(BuildContext context) {
+    int? createSelectionType = widget.type == IncomeExpense.income ? 0 : 1;
+
     return Card(
         child: Padding(
       child: Column(
@@ -43,12 +48,24 @@ class CategoryItemState extends State<CategoryItem> {
                     child: Padding(
                         padding: const EdgeInsets.only(left: 10),
                         child: Text(widget.categoryName,
-                            style: categoryTitleStyle))),
+                            style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: widget.type == IncomeExpense.income
+                                    ? Colors.green
+                                    : Colors.red)))),
                 OutlinedButton(
-                    onPressed: () {},
-                    child: Row(
-                      children: const [Text("Edit")],
-                    ))
+                  onPressed: () {},
+                  child: Row(
+                    children: const [Text("Edit")],
+                  ),
+                  style: ButtonStyle(
+                    foregroundColor: MaterialStateProperty.all<Color>(
+                        widget.type == IncomeExpense.income
+                            ? Colors.green
+                            : Colors.red),
+                  ),
+                )
               ],
             ),
           ),
@@ -57,13 +74,21 @@ class CategoryItemState extends State<CategoryItem> {
             mainAxisSize: MainAxisSize.max,
             children: [
               MiniSumStatus(
-                title: "Income",
-                value: widget.statements.map((x) => x.amount).reduce((v1, v2) => v1 + v2),
+                title:
+                    widget.type == IncomeExpense.income ? "Income" : "Expense",
+                type: widget.type,
+                value: widget.statements.isNotEmpty
+                    ? widget.statements
+                        .map((x) => x.amount)
+                        .reduce((v1, v2) => v1 + v2)
+                    : null,
               ),
               MiniSumStatus(
-                title: "Goal",
+                type: widget.type,
+                title: widget.type == IncomeExpense.income ? "Goal" : "Budget",
               ),
               MiniSumStatus(
+                type: widget.type,
                 title: "To Reach",
               ),
             ],
@@ -72,34 +97,37 @@ class CategoryItemState extends State<CategoryItem> {
             color: Colors.transparent,
           ),
           if (widget.statements.isEmpty)
-            const Padding(
-                child: Text("No income this month",
-                    style: TextStyle(color: Colors.grey)),
-                padding: EdgeInsets.symmetric(vertical: 15)),
-
+            Padding(
+                child: Text(
+                    widget.type == IncomeExpense.income
+                        ? "No income this month"
+                        : "No expense this month",
+                    style: const TextStyle(color: Colors.grey)),
+                padding: const EdgeInsets.symmetric(vertical: 15)),
           if (widget.statements.isNotEmpty)
             ExpandablePanel(
                 collapsed: Opacity(
                     child: MiniTransactionStatement(
-                      title: widget.statements[0].title,
-                      description: widget.statements[0].description,
-                      amount: widget.statements[0].amount,
-                    ),
+                        title: widget.statements[0].title,
+                        description: widget.statements[0].description,
+                        amount: widget.statements[0].amount,
+                        type: widget.type),
                     opacity: 0.5),
                 header: Padding(
-                  child: Text("Show all statements (${widget.statements.length})",
-                      style:
-                          const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                  child: Text(
+                      "Show all statements (${widget.statements.length})",
+                      style: const TextStyle(
+                          fontSize: 15, fontWeight: FontWeight.bold)),
                   padding: const EdgeInsets.only(top: 10, left: 9),
                 ),
                 expanded: Column(
                   children: widget.statements
                       .map<MiniTransactionStatement>((statement) {
                     return MiniTransactionStatement(
-                      title: statement.title,
-                      description: statement.description,
-                      amount: statement.amount,
-                    );
+                        title: statement.title,
+                        description: statement.description,
+                        amount: statement.amount,
+                        type: widget.type);
                   }).toList(),
                 )),
           const Divider(
@@ -111,7 +139,15 @@ class CategoryItemState extends State<CategoryItem> {
             children: [
               Expanded(
                   child: ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () => StatementAdder.addStatement(
+                          context, createSelectionType,
+                          initialSelectionCategory: widget.catId),
+                      style: ButtonStyle(
+                        backgroundColor: MaterialStateProperty.all<Color>(
+                            widget.type == IncomeExpense.income
+                                ? Colors.green
+                                : Colors.red),
+                      ),
                       child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.center,
