@@ -22,7 +22,7 @@ class CreateCategoryType {
   CreateCategoryType(this.name, this.type);
 }
 
-enum AppStoreActions { updateCategories, createCategory, addStatement }
+enum AppStoreActions { updateCategories, createCategory, addStatement, updateTimeFrame }
 
 class Timeframe {
   final int year;
@@ -40,6 +40,9 @@ class AppStore {
 
   static AppStore reducer(AppStore previous, action) {
     switch (action.type) {
+      case AppStoreActions.updateTimeFrame:
+        previous.timeframe = action.payload;
+        break;
       case AppStoreActions.updateCategories:
         var categories = action.payload;
         if (categories.length > 0) {

@@ -75,7 +75,7 @@ class HomePageState extends State<HomePage> {
                   physics: const NeverScrollableScrollPhysics(),
                   shrinkWrap: true,
                   crossAxisCount: 2,
-                  childAspectRatio: 2.6,
+                  childAspectRatio: 2.4,
                   children: [
                     StatusItem(
                         title: "Income this month",

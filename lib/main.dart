@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:personal_finance/budget/budget.dart';
 import 'package:personal_finance/budget/income_expense.dart';
@@ -22,13 +23,16 @@ void main() async {
   final store = Store<AppStore>(AppStore.reducer,
       initialState: AppStore([], [], Timeframe(now.year, now.month)));
 
-  loadData(store);
+  loadData(store, Timeframe(now.year, now.month));
+
+  SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(systemNavigationBarColor: Colors.white));
 
   runApp(MyApp(store: store));
 }
 
-void loadData(Store<AppStore> store) async {
-  var categories = await Category.all(DB.database!);
+void loadData(Store<AppStore> store, Timeframe tf) async {
+  var categories = await Category.all(DB.database!, tf);
   store.dispatch(DispatchType(AppStoreActions.updateCategories, categories));
 }
 
@@ -94,7 +98,8 @@ class _MyHomePageState extends State<MyHomePage> {
                       title: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(DateFormat("MMMM, y").format(DateTime(tf.year, tf.month))),
+                      Text(DateFormat("MMMM, y")
+                          .format(DateTime(tf.year, tf.month))),
                       Text(tabTitles[currentTab],
                           style: const TextStyle(
                               fontSize: 15,
@@ -102,17 +107,40 @@ class _MyHomePageState extends State<MyHomePage> {
                     ],
                   )),
                   drawer: Drawer(
-                      child: ListView(
-                    children: [
-                      for (var i = tf.year; i > 2001; i--)
-                        ListTile(
-                          title: Text("February $i"),
-                          trailing: const Icon(Icons.arrow_forward,
-                              color: Colors.green),
-                          onTap: () {},
-                        ),
-                    ],
-                  )),
+                    backgroundColor: const Color.fromARGB(255, 220, 250, 220),
+                    child: StoreConnector<AppStore, Function(Timeframe)>(
+                      converter: (store) => (Timeframe tf) => store.dispatch(
+                          DispatchType(AppStoreActions.updateTimeFrame, tf)),
+                      builder: (context, dispatch) => ListView(
+                        children: [
+                          DrawerHeader(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text("Selected month"),
+                                Text(
+                                  DateFormat("MMMM, y")
+                                      .format(DateTime(tf.year, tf.month)),
+                                  style: const TextStyle(fontSize: 25),
+                                )
+                              ],
+                            ),
+                            decoration: const BoxDecoration(
+                              color: Color.fromARGB(255, 220, 250, 220),
+                            ),
+                          ),
+                          for (var i = DateTime.now().month; i > 1; i--)
+                            ListTile(
+                              title: Text(DateFormat("MMMM, y")
+                                  .format(DateTime(tf.year, i))),
+                              trailing: const Icon(Icons.arrow_forward,
+                                  color: Colors.green),
+                              onTap: () => dispatch(Timeframe(tf.year, i)),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
                   body: Center(
                       child: Navigator(
                     key: _navigatorKey,
@@ -168,7 +196,8 @@ class _MyHomePageState extends State<MyHomePage> {
                     foregroundColor: Colors.black,
                     shape: const RoundedRectangleBorder(
                         borderRadius: BorderRadius.all(Radius.circular(15))),
-                    onPressed: () => StatementAdder.addStatement(context, createSelectionType),
+                    onPressed: () => StatementAdder.addStatement(
+                        context, createSelectionType),
                     tooltip: 'Add Income or Expense',
                     label: const Text("Add"),
                     icon: const Icon(

@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:personal_finance/utils/currency.dart';
-
 enum Status { good, bad }
 
 class StatusItem extends StatelessWidget {
@@ -15,8 +13,10 @@ class StatusItem extends StatelessWidget {
   final String amount;
   final Status status;
 
+
   @override
   Widget build(BuildContext context) {
+
     return Card(
         child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
@@ -25,10 +25,11 @@ class StatusItem extends StatelessWidget {
                   padding: const EdgeInsets.only(bottom: 5),
                   child: Text(title,
                       style: const TextStyle(fontWeight: FontWeight.bold))),
-              Text("${amount}",
+              Text(amount,
                   style: TextStyle(
                       color: status == Status.good ? Colors.green : Colors.red,
-                      fontSize: 18))
+                      fontSize: 18)),
+
             ], crossAxisAlignment: CrossAxisAlignment.start)));
   }
 }

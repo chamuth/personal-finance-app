@@ -16,11 +16,11 @@ class Category {
     return {"name": name, "type_id": type == "income" ? 0 : 1};
   }
 
-  static Future<List<CategoryContent>> all(Database db) async {
-    final List<Map<String, dynamic>> maps = await db.rawQuery('SELECT * FROM category');
+  static Future<List<CategoryContent>> all(Database db, Timeframe tf) async {
+    final List<Map<String, dynamic>> maps =
+        await db.rawQuery('SELECT * FROM category');
 
-    // TODO: from current month
-    var between = MonthUtils.getBetween(2022, 6);
+    var between = MonthUtils.getBetween(tf.year, tf.month);
     final List<Map<String, dynamic>> statements = await db.rawQuery(
         'SELECT * FROM statement WHERE created > ? AND created < ?', between);
 
@@ -33,11 +33,14 @@ class Category {
             name: maps[i]['name'],
             type: maps[i]['type_id'] == 0 ? "income" : "expense",
           ),
-          statements.where((x) =>
-            x["category_id"] == maps[i]["id"]
-          ).map<Statement>(
-            (x) => Statement(title: x["title"], description: x["description"], amount: x["amount"], created: x["created"])).toList()
-      );
+          statements
+              .where((x) => x["category_id"] == maps[i]["id"])
+              .map<Statement>((x) => Statement(
+                  title: x["title"],
+                  description: x["description"],
+                  amount: x["amount"],
+                  created: x["created"]))
+              .toList());
     });
   }
 
@@ -56,13 +59,14 @@ class Statement {
   final bool recurring;
   final int categoryId;
 
-  const Statement({this.id = 0,
-    required this.title,
-    required this.description,
-    required this.amount,
-    required this.created,
-    this.recurring = false,
-    this.categoryId = 0});
+  const Statement(
+      {this.id = 0,
+      required this.title,
+      required this.description,
+      required this.amount,
+      required this.created,
+      this.recurring = false,
+      this.categoryId = 0});
 
   Map<String, dynamic> toMap() {
     return {
