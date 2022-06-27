@@ -1,6 +1,5 @@
 import 'dart:developer';
 
-import 'package:personal_finance/budget/income_expense.dart';
 import 'package:personal_finance/store/store.dart';
 import 'package:personal_finance/utils/month.dart';
 import 'package:sqflite/sqflite.dart';

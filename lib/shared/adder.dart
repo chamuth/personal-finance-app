@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_redux/flutter_redux.dart';
@@ -8,14 +10,14 @@ import '../store/store.dart';
 import '../utils/month.dart';
 
 class StatementAdder {
-  static void addStatement(BuildContext context, int? _createSelectionType,
-      {int? initialSelectionCategory = 0}) {
+  static void addStatement(BuildContext context, int _createSelectionType,
+      {int initialSelectionCategory = 0}) {
     final titleController = TextEditingController();
     final descriptionController = TextEditingController();
     final amountController = TextEditingController();
     bool isMonthly = false;
-    int? createSelectedCategory = initialSelectionCategory;
-    int? createSelectionType = _createSelectionType;
+    int createSelectedCategory = initialSelectionCategory;
+    int createSelectionType = _createSelectionType;
 
     showDialog(
         context: context,
@@ -44,7 +46,7 @@ class StatementAdder {
                               labels: const ['Income', 'Expense'],
                               onToggle: (index) {
                                 setState(() {
-                                  createSelectionType = index;
+                                  createSelectionType = index!;
                                 });
                               },
                             ),
@@ -63,7 +65,7 @@ class StatementAdder {
                                     .toList(),
                                 onChanged: (v) => {
                                       setState(() {
-                                        createSelectedCategory = v;
+                                        createSelectedCategory = v!;
                                       })
                                     }),
                             if (cats.isNotEmpty)
@@ -119,7 +121,8 @@ class StatementAdder {
                                 amount: double.parse(amountController.text),
                                 created: MonthUtils.serialize(DateTime.now()),
                                 recurring: isMonthly == true,
-                                categoryId: createSelectedCategory ?? -1)));
+                                categoryId: createSelectedCategory
+                            )));
                       },
                       builder: (context, callback) => ElevatedButton(
                             onPressed: () {

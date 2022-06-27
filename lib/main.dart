@@ -77,7 +77,7 @@ class _MyHomePageState extends State<MyHomePage> {
   var tabTitles = ["Home", "Income", "Expense", "Budget"];
   final _navigatorKey = GlobalKey<NavigatorState>();
 
-  int? createSelectionType = 0;
+  int createSelectionType = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -184,10 +184,6 @@ class _MyHomePageState extends State<MyHomePage> {
                       BottomNavigationBarItem(
                         icon: Icon(Icons.arrow_upward),
                         label: 'Expenses',
-                      ),
-                      BottomNavigationBarItem(
-                        icon: Icon(Icons.auto_graph),
-                        label: 'Budget',
                       ),
                     ],
                   ),
