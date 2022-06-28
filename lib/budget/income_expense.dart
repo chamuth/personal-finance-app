@@ -75,6 +75,7 @@ class IncomeExpensePageState extends State<IncomeExpensePage> {
                                           ? Colors.green
                                           : Colors.red),
                                   categoryName: cat.category.name,
+                                  goal: cat.category.goal,
                                   statements: cat.statements)))
                               .toList())))
             ])));

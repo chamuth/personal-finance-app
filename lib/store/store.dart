@@ -22,7 +22,20 @@ class CreateCategoryType {
   CreateCategoryType(this.name, this.type);
 }
 
-enum AppStoreActions { updateCategories, createCategory, addStatement, updateTimeFrame }
+class GoalUpdateType {
+  final int id;
+  final double goal;
+
+  GoalUpdateType(this.id, this.goal);
+}
+
+enum AppStoreActions {
+  updateCategories,
+  createCategory,
+  addStatement,
+  updateTimeFrame,
+  updateCategoryGoal
+}
 
 class Timeframe {
   final int year;
@@ -40,14 +53,47 @@ class AppStore {
 
   static AppStore reducer(AppStore previous, action) {
     switch (action.type) {
+      case AppStoreActions.updateCategoryGoal:
+        previous.incomeCategories =
+            previous.incomeCategories.map<CategoryContent>((x) {
+          if (x.category.id == action.payload.id) {
+            return CategoryContent(
+                Category(
+                    name: x.category.name,
+                    id: x.category.id,
+                    type: x.category.type,
+                    goal: action.payload.goal),
+                x.statements);
+          }
+          return x;
+        }).toList();
+
+        previous.expenseCategories =
+            previous.expenseCategories.map<CategoryContent>((x) {
+              if (x.category.id == action.payload.id) {
+                return CategoryContent(
+                    Category(
+                        name: x.category.name,
+                        id: x.category.id,
+                        type: x.category.type,
+                        goal: action.payload.goal),
+                    x.statements);
+              }
+              return x;
+            }).toList();
+
+        Category.updateGoal(DB.database!, action.payload.id, action.payload.goal);
+        break;
       case AppStoreActions.updateTimeFrame:
         previous.timeframe = action.payload;
         break;
       case AppStoreActions.updateCategories:
         var categories = action.payload;
         if (categories.length > 0) {
-          previous.incomeCategories = categories.where((x) => x.category.type == "income").toList();
-          previous.expenseCategories = categories.where((x) => x.category.type == "expense").toList();
+          previous.incomeCategories =
+              categories.where((x) => x.category.type == "income").toList();
+          previous.expenseCategories =
+              categories.where((x) => x.category.type == "expense").toList();
         }
         break;
       case AppStoreActions.createCategory:

@@ -1,26 +1,32 @@
 import 'package:expandable/expandable.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_redux/flutter_redux.dart';
 import 'package:personal_finance/budget/income_expense.dart';
 import 'package:personal_finance/shared/adder.dart';
+import '../database/database.dart';
 import '../store/model.dart';
+import '../store/store.dart';
 import 'mini_sum_status.dart';
 import 'mini_transaction_statement.dart';
 
 class CategoryItem extends StatefulWidget {
-  const CategoryItem({
-    Key? key,
-    required this.categoryName,
-    required this.icon,
-    required this.statements,
-    required this.catId,
-    this.type = IncomeExpense.income,
-  }) : super(key: key);
+  const CategoryItem(
+      {Key? key,
+      required this.categoryName,
+      required this.icon,
+      required this.statements,
+      required this.catId,
+      this.type = IncomeExpense.income,
+      this.goal})
+      : super(key: key);
 
   final int catId;
   final String categoryName;
   final Widget icon;
   final List<Statement> statements;
   final IncomeExpense type;
+  final double? goal;
 
   @override
   State<StatefulWidget> createState() => CategoryItemState();
@@ -32,6 +38,10 @@ class CategoryItemState extends State<CategoryItem> {
   @override
   Widget build(BuildContext context) {
     int? createSelectionType = widget.type == IncomeExpense.income ? 0 : 1;
+
+    var incomeSum = widget.statements.isNotEmpty
+        ? widget.statements.map((x) => x.amount).reduce((v1, v2) => v1 + v2)
+        : null;
 
     return Card(
         child: Padding(
@@ -55,6 +65,67 @@ class CategoryItemState extends State<CategoryItem> {
                                     ? Colors.green
                                     : Colors.red)))),
                 OutlinedButton(
+                  onPressed: () {
+                    var amountController = TextEditingController();
+                    showDialog(
+                        context: context,
+                        builder: (BuildContext ctx) => StoreConnector<AppStore,
+                                VoidCallback>(
+                            converter: (store) {
+                              return () => store.dispatch(DispatchType(
+                                  AppStoreActions.updateCategoryGoal,
+                                  GoalUpdateType(widget.catId,
+                                      double.parse(amountController.text))));
+                            },
+                            builder: (context, callback) => AlertDialog(
+                                  title: Text(
+                                      widget.type == IncomeExpense.income
+                                          ? "Set Goal"
+                                          : "Set Budget"),
+                                  content: TextField(
+                                      decoration: const InputDecoration(
+                                        labelText: "Goal amount",
+                                        hintText: "1,000",
+                                        prefixText: "LKR. ",
+                                      ),
+                                      controller: amountController,
+                                      keyboardType: TextInputType.number,
+                                      inputFormatters: <TextInputFormatter>[
+                                        FilteringTextInputFormatter.digitsOnly
+                                      ]),
+                                  actions: [
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        callback();
+                                        Navigator.of(ctx).pop();
+                                      },
+                                      child: const Text("Set"),
+                                    ),
+                                    OutlinedButton(
+                                      onPressed: () {
+                                        Navigator.of(ctx).pop();
+                                      },
+                                      child: const Text('Cancel'),
+                                    ),
+                                  ],
+                                )));
+                  },
+                  child: Row(
+                    children: [
+                      Text(widget.type == IncomeExpense.income
+                          ? "Set Goal"
+                          : "Set Budget")
+                    ],
+                  ),
+                  style: ButtonStyle(
+                    foregroundColor: MaterialStateProperty.all<Color>(
+                        widget.type == IncomeExpense.income
+                            ? Colors.green
+                            : Colors.red),
+                  ),
+                ),
+                const VerticalDivider(width: 5),
+                OutlinedButton(
                   onPressed: () {},
                   child: Row(
                     children: const [Text("Edit")],
@@ -77,20 +148,19 @@ class CategoryItemState extends State<CategoryItem> {
                 title:
                     widget.type == IncomeExpense.income ? "Income" : "Expense",
                 type: widget.type,
-                value: widget.statements.isNotEmpty
-                    ? widget.statements
-                        .map((x) => x.amount)
-                        .reduce((v1, v2) => v1 + v2)
-                    : null,
+                value: incomeSum,
               ),
               MiniSumStatus(
-                type: widget.type,
-                title: widget.type == IncomeExpense.income ? "Goal" : "Budget",
-              ),
+                  type: widget.type,
+                  title:
+                      widget.type == IncomeExpense.income ? "Goal" : "Budget",
+                  value: widget.goal),
               MiniSumStatus(
-                type: widget.type,
-                title: "To Reach",
-              ),
+                  type: widget.type,
+                  title: "To Reach",
+                  value: (incomeSum != null && widget.goal != null)
+                      ? widget.goal! - incomeSum
+                      : null),
             ],
           ),
           const Divider(
@@ -106,8 +176,8 @@ class CategoryItemState extends State<CategoryItem> {
                 padding: const EdgeInsets.symmetric(vertical: 15)),
           if (widget.statements.isNotEmpty)
             Column(
-              children: widget.statements
-                  .map<MiniTransactionStatement>((statement) {
+              children:
+                  widget.statements.map<MiniTransactionStatement>((statement) {
                 return MiniTransactionStatement(
                     title: statement.title,
                     description: statement.description,

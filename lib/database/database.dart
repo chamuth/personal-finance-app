@@ -10,7 +10,7 @@ class DB {
     var path = join(await getDatabasesPath(), "data.db");
 
     log("Creating database");
-    // await deleteDatabase(path);
+    await deleteDatabase(path);
 
     database = await openDatabase(
       path,
@@ -26,15 +26,8 @@ class DB {
           [type_id] 1
         */
         ct(
-          "CREATE TABLE category(id INTEGER PRIMARY KEY, name TEXT, type_id INTEGER)",
+          "CREATE TABLE category(id INTEGER PRIMARY KEY, name TEXT, type_id INTEGER, goal REAL NULL)",
         );
-
-        /*
-          category_type
-          [id] 0
-          [type] income
-        */
-        ct("CREATE TABLE category_type(id INTEGER PRIMARY KEY, type TEXT)");
 
         /*
           statement
@@ -53,7 +46,7 @@ class DB {
             "created INTEGER,"
             "category_id INT,"
             "recurring INT"
-            ")");
+          ")");
 
         log("Populated all tables");
       },

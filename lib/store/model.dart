@@ -8,8 +8,10 @@ class Category {
   final int id;
   final String name;
   final String type;
+  final double? goal;
 
-  const Category({this.id = 0, required this.name, required this.type});
+  const Category(
+      {this.id = 0, required this.name, required this.type, this.goal});
 
   Map<String, dynamic> toMap() {
     return {"name": name, "type_id": type == "income" ? 0 : 1};
@@ -30,6 +32,7 @@ class Category {
           Category(
             id: maps[i]['id'],
             name: maps[i]['name'],
+            goal: maps[i]["goal"],
             type: maps[i]['type_id'] == 0 ? "income" : "expense",
           ),
           statements
@@ -46,6 +49,10 @@ class Category {
   static Future insert(Database db, Category category) async {
     return db.insert("category", category.toMap(),
         conflictAlgorithm: ConflictAlgorithm.ignore);
+  }
+  
+  static Future updateGoal(Database db, int id, double amount) async {
+    return db.rawUpdate("UPDATE category SET goal = ? WHERE id = ?", [amount, id]);
   }
 }
 
