@@ -63,7 +63,7 @@ class Statement {
   final double amount;
   final int created;
   final bool recurring;
-  final int categoryId;
+  final int? categoryId;
 
   const Statement(
       {this.id = 0,

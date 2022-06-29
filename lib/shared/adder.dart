@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_redux/flutter_redux.dart';
@@ -11,12 +9,12 @@ import '../utils/month.dart';
 
 class StatementAdder {
   static void addStatement(BuildContext context, int _createSelectionType,
-      {int initialSelectionCategory = 0}) {
+      {int? initialSelectionCategory = null}) {
     final titleController = TextEditingController();
     final descriptionController = TextEditingController();
     final amountController = TextEditingController();
     bool isMonthly = false;
-    int createSelectedCategory = initialSelectionCategory;
+    int? createSelectedCategory = initialSelectionCategory;
     int createSelectionType = _createSelectionType;
 
     showDialog(
@@ -121,8 +119,7 @@ class StatementAdder {
                                 amount: double.parse(amountController.text),
                                 created: MonthUtils.serialize(DateTime.now()),
                                 recurring: isMonthly == true,
-                                categoryId: createSelectedCategory
-                            )));
+                                categoryId: createSelectedCategory)));
                       },
                       builder: (context, callback) => ElevatedButton(
                             onPressed: () {
