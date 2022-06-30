@@ -1,10 +1,14 @@
+import 'dart:developer';
+
 import 'package:expandable/expandable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_redux/flutter_redux.dart';
 import 'package:personal_finance/budget/income_expense.dart';
 import 'package:personal_finance/shared/adder.dart';
+import 'package:syncfusion_flutter_charts/sparkcharts.dart';
 import '../database/database.dart';
+import '../database/stats.dart';
 import '../store/model.dart';
 import '../store/store.dart';
 import 'mini_sum_status.dart';
@@ -34,6 +38,7 @@ class CategoryItem extends StatefulWidget {
 
 class CategoryItemState extends State<CategoryItem> {
   static const mainPadding = EdgeInsets.symmetric(vertical: 10, horizontal: 10);
+  List<StatReturn>? comparisonValues;
 
   @override
   Widget build(BuildContext context) {
@@ -126,9 +131,16 @@ class CategoryItemState extends State<CategoryItem> {
                 ),
                 const VerticalDivider(width: 5),
                 OutlinedButton(
-                  onPressed: () {},
+                  onPressed: () async {
+                    // load comparison details
+                    var dat = await Stats.lastMonthCompare(catId: widget.catId);
+                    log("$dat");
+                    setState(() {
+                      comparisonValues = dat;
+                    });
+                  },
                   child: Row(
-                    children: const [Text("Edit")],
+                    children: const [Text("Compare")],
                   ),
                   style: ButtonStyle(
                     foregroundColor: MaterialStateProperty.all<Color>(
@@ -140,32 +152,65 @@ class CategoryItemState extends State<CategoryItem> {
               ],
             ),
           ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            mainAxisSize: MainAxisSize.max,
-            children: [
-              MiniSumStatus(
-                title:
-                    widget.type == IncomeExpense.income ? "Income" : "Expense",
-                type: widget.type,
-                value: incomeSum,
+          Padding(
+              child: Row(
+                mainAxisAlignment: widget.goal == null
+                    ? MainAxisAlignment.start
+                    : MainAxisAlignment.spaceAround,
+                mainAxisSize: MainAxisSize.max,
+                children: [
+                  MiniSumStatus(
+                    title: widget.type == IncomeExpense.income
+                        ? "Income"
+                        : "Expense",
+                    type: widget.type,
+                    value: incomeSum,
+                  ),
+                  if (widget.goal != null)
+                    MiniSumStatus(
+                        type: widget.type,
+                        title: widget.type == IncomeExpense.income
+                            ? "Goal"
+                            : "Budget",
+                        value: widget.goal),
+                  if (widget.goal != null)
+                    MiniSumStatus(
+                        type: widget.type,
+                        title: "To Reach",
+                        value: (incomeSum != null && widget.goal != null)
+                            ? widget.goal! - incomeSum
+                            : null),
+                ],
               ),
-              MiniSumStatus(
-                  type: widget.type,
-                  title:
-                      widget.type == IncomeExpense.income ? "Goal" : "Budget",
-                  value: widget.goal),
-              MiniSumStatus(
-                  type: widget.type,
-                  title: "To Reach",
-                  value: (incomeSum != null && widget.goal != null)
-                      ? widget.goal! - incomeSum
-                      : null),
-            ],
-          ),
-          const Divider(
-            color: Colors.transparent,
-          ),
+              padding: const EdgeInsets.symmetric(horizontal: 10)),
+          if (comparisonValues != null)
+            const Divider(color: Colors.transparent, height: 30),
+          if (comparisonValues != null)
+            SizedBox(
+                height: 100,
+                child: Padding(
+                  child: SfSparkLineChart(
+                    //Enable the trackball
+                    trackball: const SparkChartTrackball(
+                        activationMode: SparkChartActivationMode.tap,
+
+                    ),
+                    //Enable marker
+                    marker: const SparkChartMarker(
+                        displayMode: SparkChartMarkerDisplayMode.all,
+                    ),
+                    //Enable data label
+                    color: Colors.green,
+                    axisLineColor: Colors.transparent,
+                    labelStyle: const TextStyle(color: Colors.grey, fontSize: 16),
+                    labelDisplayMode: SparkChartLabelDisplayMode.all,
+                    data: comparisonValues != null
+                        ? comparisonValues?.map<double>((x) => x.total).toList()
+                        : [],
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                )),
+          const Divider(color: Colors.transparent, height: 20),
           if (widget.statements.isEmpty)
             Padding(
                 child: Text(

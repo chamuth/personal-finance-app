@@ -51,11 +51,11 @@ class AppStore {
 
   AppStore(this.incomeCategories, this.expenseCategories, this.timeframe);
 
-  static AppStore reducer(AppStore previous, action) {
+  static AppStore reducer(AppStore state, action) {
     switch (action.type) {
       case AppStoreActions.updateCategoryGoal:
-        previous.incomeCategories =
-            previous.incomeCategories.map<CategoryContent>((x) {
+        state.incomeCategories =
+            state.incomeCategories.map<CategoryContent>((x) {
           if (x.category.id == action.payload.id) {
             return CategoryContent(
                 Category(
@@ -68,31 +68,32 @@ class AppStore {
           return x;
         }).toList();
 
-        previous.expenseCategories =
-            previous.expenseCategories.map<CategoryContent>((x) {
-              if (x.category.id == action.payload.id) {
-                return CategoryContent(
-                    Category(
-                        name: x.category.name,
-                        id: x.category.id,
-                        type: x.category.type,
-                        goal: action.payload.goal),
-                    x.statements);
-              }
-              return x;
-            }).toList();
+        state.expenseCategories =
+            state.expenseCategories.map<CategoryContent>((x) {
+          if (x.category.id == action.payload.id) {
+            return CategoryContent(
+                Category(
+                    name: x.category.name,
+                    id: x.category.id,
+                    type: x.category.type,
+                    goal: action.payload.goal),
+                x.statements);
+          }
+          return x;
+        }).toList();
 
-        Category.updateGoal(DB.database!, action.payload.id, action.payload.goal);
+        Category.updateGoal(
+            DB.database!, action.payload.id, action.payload.goal);
         break;
       case AppStoreActions.updateTimeFrame:
-        previous.timeframe = action.payload;
+        state.timeframe = action.payload;
         break;
       case AppStoreActions.updateCategories:
         var categories = action.payload;
         if (categories.length > 0) {
-          previous.incomeCategories =
+          state.incomeCategories =
               categories.where((x) => x.category.type == "income").toList();
-          previous.expenseCategories =
+          state.expenseCategories =
               categories.where((x) => x.category.type == "expense").toList();
         }
         break;
@@ -105,21 +106,24 @@ class AppStore {
         Category.insert(DB.database!, cat);
 
         if (action.payload.type == "income") {
-          previous.incomeCategories
+          state.incomeCategories
               .add(CategoryContent(Category(name: name, type: type), []));
         } else {
-          previous.expenseCategories
+          state.expenseCategories
               .add(CategoryContent(Category(name: name, type: type), []));
         }
         break;
       case AppStoreActions.addStatement:
         var statement = action.payload;
 
+        var now = DateTime.now();
+        state.timeframe = Timeframe(now.year, now.month);
+
         Statement.insert(DB.database!, statement);
 
         // local
-        previous.incomeCategories =
-            previous.incomeCategories.map<CategoryContent>((c) {
+        state.incomeCategories =
+            state.incomeCategories.map<CategoryContent>((c) {
           if (c.category.id == statement.categoryId) {
             c.statements.add(statement);
           }
@@ -127,8 +131,8 @@ class AppStore {
           return c;
         }).toList();
 
-        previous.expenseCategories =
-            previous.expenseCategories.map<CategoryContent>((c) {
+        state.expenseCategories =
+            state.expenseCategories.map<CategoryContent>((c) {
           if (c.category.id == statement.categoryId) {
             c.statements.add(statement);
           }
@@ -139,6 +143,6 @@ class AppStore {
         break;
     }
 
-    return previous;
+    return state;
   }
 }

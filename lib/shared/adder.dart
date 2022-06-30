@@ -119,7 +119,9 @@ class StatementAdder {
                                 amount: double.parse(amountController.text),
                                 created: MonthUtils.serialize(DateTime.now()),
                                 recurring: isMonthly == true,
-                                categoryId: createSelectedCategory)));
+                                categoryId: createSelectedCategory,
+                                month: Statement.getMonth(),
+                            )));
                       },
                       builder: (context, callback) => ElevatedButton(
                             onPressed: () {

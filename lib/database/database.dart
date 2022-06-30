@@ -44,6 +44,7 @@ class DB {
             "description TEXT,"
             "amount REAL,"
             "created INTEGER,"
+            "month INTEGER,"
             "category_id INT,"
             "recurring INT"
           ")");

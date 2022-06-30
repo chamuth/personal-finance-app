@@ -4,6 +4,7 @@ import 'package:personal_finance/budget/category_item.dart';
 import 'package:personal_finance/database/database.dart';
 import 'package:personal_finance/shared/styles.dart';
 import 'package:personal_finance/store/model.dart';
+import 'package:syncfusion_flutter_charts/sparkcharts.dart';
 
 import '../store/store.dart';
 

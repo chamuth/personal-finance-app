@@ -22,9 +22,11 @@ class Category {
         await db.rawQuery('SELECT * FROM category');
 
     var between = MonthUtils.getBetween(tf.year, tf.month);
+    log("Between ${between[0]} and ${between[1]}");
     final List<Map<String, dynamic>> statements = await db.rawQuery(
-        'SELECT * FROM statement WHERE created > ? AND created < ?', between);
+        'SELECT * FROM statement WHERE created > ? AND created < ? OR recurring = 1', between);
 
+    log("Found ${statements.length} statements");
     // log("${statements.length} ${statements[2]['category_id']} ${maps[0]['id']}");
 
     return List.generate(maps.length, (i) {
@@ -39,6 +41,7 @@ class Category {
               .where((x) => x["category_id"] == maps[i]["id"])
               .map<Statement>((x) => Statement(
                   title: x["title"],
+                  month: x["month"],
                   description: x["description"],
                   amount: x["amount"],
                   created: x["created"]))
@@ -50,9 +53,10 @@ class Category {
     return db.insert("category", category.toMap(),
         conflictAlgorithm: ConflictAlgorithm.ignore);
   }
-  
+
   static Future updateGoal(Database db, int id, double amount) async {
-    return db.rawUpdate("UPDATE category SET goal = ? WHERE id = ?", [amount, id]);
+    return db
+        .rawUpdate("UPDATE category SET goal = ? WHERE id = ?", [amount, id]);
   }
 }
 
@@ -62,6 +66,7 @@ class Statement {
   final String description;
   final double amount;
   final int created;
+  final int month;
   final bool recurring;
   final int? categoryId;
 
@@ -71,6 +76,7 @@ class Statement {
       required this.description,
       required this.amount,
       required this.created,
+      required this.month,
       this.recurring = false,
       this.categoryId = 0});
 
@@ -80,14 +86,25 @@ class Statement {
       "description": description,
       "amount": amount,
       "created": created,
+      "month": month,
       "recurring": recurring ? 1 : 0,
       "category_id": categoryId
     };
   }
 
+  static int getMonth({DateTime? date}) {
+    var now = DateTime.now();
+
+    if (date != null) {
+      return int.parse("${date.year}${date.month}");
+    }
+
+    return int.parse("${now.year}${now.month}");
+  }
+
   static Future insert(Database db, Statement statement) async {
-    log("INSERTING ${statement.title} INTO ${statement.categoryId}");
+    log("INSERTING ${statement.title} INTO ${statement.categoryId} at ${statement.created}");
     return db.insert("statement", statement.toMap(),
-        conflictAlgorithm: ConflictAlgorithm.ignore);
+        conflictAlgorithm: ConflictAlgorithm.fail);
   }
 }

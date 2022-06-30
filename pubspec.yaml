@@ -42,6 +42,8 @@ dependencies:
   sqflite: ^2.0.2
   path: ^1.8.0
   toggle_switch: ^2.0.1
+  syncfusion_flutter_charts: ^20.1.61
+  faker: ^2.0.0
 
 dev_dependencies:
   flutter_test:
