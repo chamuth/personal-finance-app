@@ -9,4 +9,8 @@ class Currency
   {
     return (cents == true ? cf : cf2).format(amount);
   }
+
+  static String truncateDigits(double n){
+    return n.toStringAsFixed(n.truncateToDouble() == n ? 0 : 2);
+  }
 }

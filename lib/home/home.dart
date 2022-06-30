@@ -20,11 +20,27 @@ class HomePage extends StatefulWidget {
 }
 
 class HomePageState extends State<HomePage> {
+  List<double?> stats = [];
+
+  Future loadStats() async {
+    var income = await Stats.lastMonthCompare(type: IncomeExpense.income);
+    var expense = await Stats.lastMonthCompare(type: IncomeExpense.expense);
+
+    setState(() {
+      stats = [
+        (income.last.total / income[income.length - 2].total) * 100,
+        expense.isNotEmpty
+            ? (expense.last.total / expense[expense.length - 2].total) * 100
+            : null
+      ];
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     const grapherPadding = EdgeInsets.only(top: 40, bottom: 25);
 
-    Stats.lastMonthCompare();
+    loadStats();
 
     return Container(
         color: Backgrounds.pageBackground,
@@ -74,36 +90,35 @@ class HomePageState extends State<HomePage> {
                             ),
                             progressColor: Colors.green,
                           ),
-
                         if (calculations[1].isNotEmpty)
                           CircularPercentIndicator(
-                          radius: 75.0,
-                          lineWidth: 10.0,
-                          percent: calculations[1][0] / calculations[1][1],
-                          center: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Padding(
-                                  child: Text("Budget spent"),
-                                  padding: EdgeInsets.only(bottom: 5)),
-                              Text(
-                                "LKR ${Currency.format(calculations[1][0], cents: false)}",
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 18,
-                                    color: Colors.red),
-                              ),
-                              Text(
-                                "/ LKR ${Currency.format(calculations[1][1], cents: false)}",
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 12,
-                                    color: Colors.grey),
-                              )
-                            ],
+                            radius: 75.0,
+                            lineWidth: 10.0,
+                            percent: calculations[1][0] / calculations[1][1],
+                            center: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Padding(
+                                    child: Text("Budget spent"),
+                                    padding: EdgeInsets.only(bottom: 5)),
+                                Text(
+                                  "LKR ${Currency.format(calculations[1][0], cents: false)}",
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18,
+                                      color: Colors.red),
+                                ),
+                                Text(
+                                  "/ LKR ${Currency.format(calculations[1][1], cents: false)}",
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                      color: Colors.grey),
+                                )
+                              ],
+                            ),
+                            progressColor: Colors.red,
                           ),
-                          progressColor: Colors.red,
-                        ),
                       ])),
             ),
 
@@ -126,14 +141,8 @@ class HomePageState extends State<HomePage> {
                             amount:
                                 "LKR. ${Calculations.categorySumProcessor(store.expenseCategories)}",
                             status: Status.bad),
-                        const StatusItem(
-                            title: "Income this month",
-                            amount: "+5%",
-                            status: Status.good),
-                        const StatusItem(
-                            title: "Spending this month",
-                            amount: "-5%",
-                            status: Status.good),
+                        if (stats[0] != null) incomePercentage(0),
+                        if (stats[1] != null) incomePercentage(1),
                         for (var i = 0; i < store.expenseCategories.length; i++)
                           StatusItem(
                               title:
@@ -145,5 +154,14 @@ class HomePageState extends State<HomePage> {
                     padding: const EdgeInsets.all(10)))
           ],
         ));
+  }
+
+  Widget incomePercentage(int i) {
+    var value = stats[i]!;
+
+    return StatusItem(
+        title: "Income this month",
+        amount: "${Currency.truncateDigits(value)}%",
+        status: value > 0 ? Status.good : Status.bad);
   }
 }
