@@ -14,7 +14,7 @@ class Category {
       {this.id = 0, required this.name, required this.type, this.goal});
 
   Map<String, dynamic> toMap() {
-    return {"name": name, "type_id": type == "income" ? 0 : 1};
+    return {"name": name, "type_id": type == "income" ? 0 : 1, "goal": goal};
   }
 
   static Future<List<CategoryContent>> all(Database db, Timeframe tf) async {

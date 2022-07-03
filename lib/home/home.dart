@@ -20,7 +20,8 @@ class HomePage extends StatefulWidget {
 }
 
 class HomePageState extends State<HomePage> {
-  List<double?> stats = [];
+  static List<double?> stats = [];
+  static List<double?> catStats = [];
 
   Future loadStats() async {
     var income = await Stats.lastMonthCompare(type: IncomeExpense.income);
@@ -36,11 +37,22 @@ class HomePageState extends State<HomePage> {
     });
   }
 
+  Future loadCatStats() async {
+    for (var i = 3; i < 5; i ++) {
+      var sta = await Stats.lastMonthCompare(catId: i);
+      setState(() {
+        catStats.add(
+            (sta.last.total / sta[sta.length - 2].total) * 100);
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     const grapherPadding = EdgeInsets.only(top: 40, bottom: 25);
 
-    loadStats();
+    if (stats.isEmpty) loadStats();
+    if (catStats.isEmpty) loadCatStats();
 
     return Container(
         color: Backgrounds.pageBackground,
@@ -144,11 +156,7 @@ class HomePageState extends State<HomePage> {
                         if (stats[0] != null) incomePercentage(0),
                         if (stats[1] != null) incomePercentage(1),
                         for (var i = 0; i < store.expenseCategories.length; i++)
-                          StatusItem(
-                              title:
-                                  "${store.expenseCategories[i].category.name} spending",
-                              amount: "+20%",
-                              status: Status.bad)
+                          expensePercentage(i, str: "${store.expenseCategories[i].category.name} spending")
                       ],
                     ),
                     padding: const EdgeInsets.all(10)))
@@ -156,12 +164,24 @@ class HomePageState extends State<HomePage> {
         ));
   }
 
-  Widget incomePercentage(int i) {
-    var value = stats[i]!;
+  Widget incomePercentage(int i, {String? str}) {
+    var value = stats[i]! - 100;
+    var sign = value > 0 ? "+" : (value < 0? "-" : "");
 
     return StatusItem(
-        title: "Income this month",
-        amount: "${Currency.truncateDigits(value)}%",
-        status: value > 0 ? Status.good : Status.bad);
+        title: str ?? (i == 0 ? "Income this month" : "Expense this month"),
+        amount: "$sign${Currency.truncateDigits(value)}%",
+        status: sign == "+" && i == 0 ? Status.good : Status.bad);
   }
+
+  Widget expensePercentage(int i, {String? str}) {
+    var value = catStats[i]! - 100;
+    var sign = value > 0 ? "+" : (value < 0? "-" : "");
+
+    return StatusItem(
+        title: str ?? (i == 0 ? "Income this month" : "Expense this month"),
+        amount: "$sign${Currency.truncateDigits(value)}%",
+        status: sign == "-" ? Status.good : Status.bad);
+  }
+
 }

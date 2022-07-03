@@ -200,7 +200,7 @@ class CategoryItemState extends State<CategoryItem> {
                         displayMode: SparkChartMarkerDisplayMode.all,
                     ),
                     //Enable data label
-                    color: Colors.green,
+                    color: widget.type == IncomeExpense.income ? Colors.green: Colors.red,
                     axisLineColor: Colors.transparent,
                     labelStyle: const TextStyle(color: Colors.grey, fontSize: 16),
                     labelDisplayMode: SparkChartLabelDisplayMode.all,

@@ -3,6 +3,8 @@ import 'dart:developer';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
+import 'mock.dart';
+
 class DB {
   static Database? database;
 
@@ -10,7 +12,8 @@ class DB {
     var path = join(await getDatabasesPath(), "data.db");
 
     log("Creating database");
-    // await deleteDatabase(path);
+    await deleteDatabase(path);
+
 
     database = await openDatabase(
       path,
@@ -53,5 +56,7 @@ class DB {
       },
       version: 1,
     );
+
+    Mock.mockData(database!);
   }
 }
